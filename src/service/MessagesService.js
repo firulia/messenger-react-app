@@ -1,8 +1,6 @@
 import axios from 'axios';
 import configData from '../config.json';
-import {
-    ServerResponseException
-} from '../exceptions/ServerException';
+import {ServerResponseException} from '../exceptions/ServerException';
 import defaultMember from '../images/Users/default.png'
 
 const url = `${configData.SERVER_URL}/${configData.channelId}`
@@ -11,11 +9,11 @@ export async function getMessages(users) {
     return axios.get(url)
         .then(res => {
             if (res.status !== 200) {
-                throw new ServerResponseException(`Server response status error: ${res.status}`);
+                throw new ServerResponseException(`Server response status error: ${JSON.stringify(res)}`);
             }
             const data = res.data;
             if (!data.success || data.error.code !== 0) {
-                throw new ServerResponseException(`Server error: ${JSON.stringify(data)}`);
+                throw new ServerResponseException(`Server error: ${JSON.stringify(res)}`);
             }
             return data.data.messages.map(v => {
                 const user = users.find(user => user.id === v.user.id);
