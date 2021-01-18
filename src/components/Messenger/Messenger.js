@@ -13,6 +13,7 @@ import axios from 'axios';
 import configData from '../../config.json';
 import { formatAMPM } from '../../converter';
 import { ReactSVG } from 'react-svg';
+import {ServerResponseException} from '../../exceptions/ServerException'
 import SvgColor from 'react-svg-color';
 
 
@@ -55,23 +56,16 @@ class Messenger extends Component {
     loadMessages() {
         axios.get(url)
             .then(res => {
+                if (res.status !== 200){
+                    throw new ServerResponseException(`Server response status error: ${res.status}`)
+                }
                 const news = res.data;
-                if (news.success && news.error.code === 0) {
-                    const messages = news.data.messages.map(v => {
-                        const user = this.users.find(user => user.id === v.user.id);
-                        if (typeof user === "undefined") {
-                            return {
-                                id: v.id,
-                                sentAt: v.sentAt,
-                                text: v.text,
-                                user: {
-                                    id: v.user.id,
-                                    name: v.user.name,
-                                    color: "EDF1F5",
-                                    icon: defaultMember
-                                }
-                            };
-                        }
+                if (!news.success || news.error.code !== 0) {
+                    throw new ServerResponseException(`Server error: ${JSON.stringify(news)}`)
+                }
+                return news.data.messages.map(v => {
+                    const user = this.users.find(user => user.id === v.user.id);
+                    if (typeof user === "undefined") {
                         return {
                             id: v.id,
                             sentAt: v.sentAt,
@@ -79,17 +73,25 @@ class Messenger extends Component {
                             user: {
                                 id: v.user.id,
                                 name: v.user.name,
-                                color: user.color,
-                                icon: user.icon
+                                color: "EDF1F5",
+                                icon: defaultMember
                             }
                         };
                     }
-                    );
-                    this.setState({
-                        messages
-                    });
+                    return {
+                        id: v.id,
+                        sentAt: v.sentAt,
+                        text: v.text,
+                        user: {
+                            id: v.user.id,
+                            name: v.user.name,
+                            color: user.color,
+                            icon: user.icon
+                        }
+                    };
                 }
-            });
+                );
+            }).then(messages => this.setState({messages}));
     }
 
     // It makes possible to see a new messages. DDoS because WebSocket is not available :) 
@@ -135,7 +137,7 @@ class Messenger extends Component {
 
     renderMembers() {
         return this.users.map((user, i) => (
-            <img key={i} className={classes.Messenger_members_item} style={{ borderColor: user.color }} src={user.icon} alt={"Member" + user.id}/>
+            <img key={i} className={classes.Messenger_members_item} style={{ borderColor: user.color }} src={user.icon} alt={"Member" + user.id} />
         ))
     }
 
@@ -161,7 +163,7 @@ class Messenger extends Component {
     }
 
     sendMessage = event => {
-        
+
         const text = { "text": this.state.text }
 
         const headers = {
