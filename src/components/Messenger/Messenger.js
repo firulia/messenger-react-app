@@ -13,8 +13,6 @@ import { formatAMPM } from '../../converter';
 import { ReactSVG } from 'react-svg';
 import { getMessages, sendMessage } from '../../service/MessagesService';
 
-const url = `${configData.SERVER_URL}/${configData.channelId}`
-
 class Messenger extends Component {
 
     state = {
@@ -49,8 +47,9 @@ class Messenger extends Component {
         this.loadMessages();
     }
 
-    loadMessages() {
-        getMessages(this.users).then(messages => this.setState({ messages }));
+    async loadMessages() {
+        const messages = await getMessages(this.users)
+        this.setState({ messages })
     }
 
     // It makes possible to see a new messages. DDoS because WebSocket is not available :) 
@@ -84,7 +83,7 @@ class Messenger extends Component {
                                 <input className={classes.Messenger_action_bar_input} type="text" title="Message" onChange={this.handleInput} value={this.state.text} />
                                 <ReactSVG className={classes.Messenger_action_bar_input_icon} src={smiley} />
                             </div>
-                            <button className={classes.Messenger_action_bar_btn} type="button" onClick={this.sendMessageHandle}>
+                            <button className={classes.Messenger_action_bar_btn} type="button" onClick={this.sendMessageEventHandle}>
                                 <ReactSVG className={classes.Messenger_action_bar_btn} src={submit} />
                             </button>
                         </div>
@@ -94,16 +93,20 @@ class Messenger extends Component {
         )
     }
 
-    sendMessageHandle = () => {
+    sendMessageEventHandle = () => {
         const textObj = {
             "text": this.state.text
         }
-        sendMessage(textObj)
-            .then(this.setState({
-                text: ''
-            }))
-            .then(this.loadMessages())
-            .catch(e => alert("Can not send message to the server. " + e.text)) //check error
+        this.sendMessageHandle(textObj);
+    }
+
+    async sendMessageHandle(textObj) {
+        await sendMessage(textObj);
+        this.setState({
+            text: ''
+        });
+        this.loadMessages();
+
     }
 
     renderMembers() {
