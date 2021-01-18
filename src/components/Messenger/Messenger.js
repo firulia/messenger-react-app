@@ -4,18 +4,14 @@ import member1 from '../../images/Users/1.jpg';
 import member2 from '../../images/Users/2.jpg';
 import member3 from '../../images/Users/3.jpg';
 import member4 from '../../images/Users/4.jpg';
-import defaultMember from '../../images/Users/default.png'
 import plus from '../../images/Icons/plus.svg';
 import arrow from '../../images/Icons/arrow.svg';
 import submit from '../../images/Icons/submit.svg';
 import smiley from '../../images/Icons/smiley.svg';
-import axios from 'axios';
 import configData from '../../config.json';
 import { formatAMPM } from '../../converter';
 import { ReactSVG } from 'react-svg';
-import {ServerResponseException} from '../../exceptions/ServerException'
-import SvgColor from 'react-svg-color';
-
+import { getMessages, sendMessage } from '../../service/MessagesService';
 
 const url = `${configData.SERVER_URL}/${configData.channelId}`
 
@@ -54,44 +50,7 @@ class Messenger extends Component {
     }
 
     loadMessages() {
-        axios.get(url)
-            .then(res => {
-                if (res.status !== 200){
-                    throw new ServerResponseException(`Server response status error: ${res.status}`)
-                }
-                const news = res.data;
-                if (!news.success || news.error.code !== 0) {
-                    throw new ServerResponseException(`Server error: ${JSON.stringify(news)}`)
-                }
-                return news.data.messages.map(v => {
-                    const user = this.users.find(user => user.id === v.user.id);
-                    if (typeof user === "undefined") {
-                        return {
-                            id: v.id,
-                            sentAt: v.sentAt,
-                            text: v.text,
-                            user: {
-                                id: v.user.id,
-                                name: v.user.name,
-                                color: "EDF1F5",
-                                icon: defaultMember
-                            }
-                        };
-                    }
-                    return {
-                        id: v.id,
-                        sentAt: v.sentAt,
-                        text: v.text,
-                        user: {
-                            id: v.user.id,
-                            name: v.user.name,
-                            color: user.color,
-                            icon: user.icon
-                        }
-                    };
-                }
-                );
-            }).then(messages => this.setState({messages}));
+        getMessages(this.users).then(messages => this.setState({ messages }));
     }
 
     // It makes possible to see a new messages. DDoS because WebSocket is not available :) 
@@ -125,7 +84,7 @@ class Messenger extends Component {
                                 <input className={classes.Messenger_action_bar_input} type="text" title="Message" onChange={this.handleInput} value={this.state.text} />
                                 <ReactSVG className={classes.Messenger_action_bar_input_icon} src={smiley} />
                             </div>
-                            <button className={classes.Messenger_action_bar_btn} type="button" onClick={this.sendMessage}>
+                            <button className={classes.Messenger_action_bar_btn} type="button" onClick={this.sendMessageHandle}>
                                 <ReactSVG className={classes.Messenger_action_bar_btn} src={submit} />
                             </button>
                         </div>
@@ -133,6 +92,18 @@ class Messenger extends Component {
                 </div>
             </div>
         )
+    }
+
+    sendMessageHandle = () => {
+        const textObj = {
+            "text": this.state.text
+        }
+        sendMessage(textObj)
+            .then(this.setState({
+                text: ''
+            }))
+            .then(this.loadMessages())
+            .catch(e => alert("Can not send message to the server. " + e.text)) //check error
     }
 
     renderMembers() {
@@ -160,25 +131,6 @@ class Messenger extends Component {
         this.setState({
             text: event.target.value
         })
-    }
-
-    sendMessage = event => {
-
-        const text = { "text": this.state.text }
-
-        const headers = {
-            'content-type': 'application/json',
-            'cache-control': 'no-cache'
-        }
-
-        axios.post(url, JSON.stringify(text), {
-            headers: headers
-        })
-            .then(this.setState({
-                text: ''
-            }))
-            .then(this.loadMessages())
-            .catch(e => alert("Can not send message to the server. " + e.text))//check error
     }
 
 }
