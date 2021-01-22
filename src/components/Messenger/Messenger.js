@@ -44,7 +44,8 @@ class Messenger extends Component {
     ]
 
     componentDidMount() {
-        this.loadMessages();
+        this.loadMessages()
+        this.tmpFunction()
     }
 
     async loadMessages() {
@@ -93,22 +94,6 @@ class Messenger extends Component {
         )
     }
 
-    sendMessageEventHandle = () => {
-        const textObj = {
-            "text": this.state.text
-        }
-        this.sendMessageHandle(textObj);
-    }
-
-    async sendMessageHandle(textObj) {
-        await sendMessage(textObj);
-        this.setState({
-            text: ''
-        });
-        this.loadMessages();
-
-    }
-
     renderMembers() {
         return this.users.map((user, i) => (
             <img key={i} className={classes.Messenger_members_item} style={{ borderColor: user.color }} src={user.icon} alt={"Member" + user.id} />
@@ -134,6 +119,21 @@ class Messenger extends Component {
         this.setState({
             text: event.target.value
         })
+    }
+
+    sendMessageEventHandle = () => {
+        const textObj = {
+            "text": this.state.text
+        }
+        this.sendMessageHandle(textObj)
+    }
+
+    async sendMessageHandle(textObj) {
+        await sendMessage(textObj)
+        this.setState({
+            text: ''
+        });
+        this.loadMessages()
     }
 
 }
