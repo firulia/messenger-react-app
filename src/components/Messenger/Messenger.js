@@ -12,6 +12,7 @@ import configData from '../../config.json';
 import { formatAMPM } from '../../converter';
 import { ReactSVG } from 'react-svg';
 import { getMessages, sendMessage } from '../../service/MessagesService';
+import io from 'socket.io-client'
 
 class Messenger extends Component {
 
@@ -44,8 +45,8 @@ class Messenger extends Component {
     ]
 
     componentDidMount() {
+        this.connectSocket()
         this.loadMessages()
-        this.tmpFunction()
     }
 
     async loadMessages() {
@@ -67,7 +68,7 @@ class Messenger extends Component {
                 <div className={classes.Messenger_frame}>
                     <header className={classes.Messenger_header}>
                         <ReactSVG className={classes.Messenger_arrow} src={arrow} />
-                        {configData.ownerName}'s Groupchat
+                        {configData.name}'s Groupchat
                     </header>
                     <div className={classes.Messenger_members}>
                         {this.renderMembers()}
@@ -123,17 +124,22 @@ class Messenger extends Component {
 
     sendMessageEventHandle = () => {
         const textObj = {
-            "text": this.state.text
+            "text": this.state.text,
+            "name": configData.name
         }
         this.sendMessageHandle(textObj)
     }
 
-    async sendMessageHandle(textObj) {
-        await sendMessage(textObj)
+    sendMessageHandle(textObj) {
+        sendMessage(textObj)
         this.setState({
             text: ''
         });
         this.loadMessages()
+    }
+
+    connectSocket = () => {
+        io('http://localhost:8081')
     }
 
 }

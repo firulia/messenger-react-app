@@ -1,5 +1,5 @@
 {
     "SERVER_URL": "https://www.visit-x.net/rest/v1/recruiting/messenger/channel",
     "channelId": 1234,
-    "ownerName": "Julia"
+    "name": "Julia"
 }

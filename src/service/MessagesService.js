@@ -1,8 +1,13 @@
 import axios from 'axios';
 import configData from '../config.json';
-import {ServerResponseException} from '../exceptions/ServerException';
+import {
+    ServerResponseException
+} from '../exceptions/ServerException';
 import defaultMember from '../images/Users/default.png'
-import {OK} from '../models/HTTPCodes'
+import {
+    OK
+} from '../models/HTTPCodes'
+import socket from './socket'
 
 const url = `${configData.SERVER_URL}/${configData.channelId}`
 
@@ -46,24 +51,7 @@ export async function getMessages(users) {
     });
 }
 
-export async function sendMessage(textObj) {
+export function sendMessage(textObj) {
 
-    const headers = {
-        'content-type': 'application/json',
-        'cache-control': 'no-cache'
-    }
-
-    const response = await axios.post(url, JSON.stringify(textObj), {
-        headers: headers
-    })
-
-    if (response.status !== OK) {
-        throw new ServerResponseException(`Server response status error: ${response.status}`);
-    }
-    const data = response.data;
-    if (!data.success || data.error.code !== 0) {
-        throw new ServerResponseException(`Server error: ${JSON.stringify(data)}`);
-    }
-
-    return response
+    const response = socket.emit('send message', JSON.stringify(textObj))
 }
