@@ -45,7 +45,6 @@ class Messenger extends Component {
 
     componentDidMount() {
         this.loadMessages()
-        this.tmpFunction()
     }
 
     async loadMessages() {
