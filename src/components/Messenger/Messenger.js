@@ -1,4 +1,5 @@
-import React, { Component } from 'react'
+//import React, { Component } from 'react'
+import { useState, useEffect } from 'react'
 import classes from './Messenger.module.css'
 import member1 from '../../images/Users/1.jpg';
 import member2 from '../../images/Users/2.jpg';
@@ -13,14 +14,17 @@ import { formatAMPM } from '../../converter';
 import { ReactSVG } from 'react-svg';
 import { getMessages, sendMessage } from '../../service/MessagesService';
 
-class Messenger extends Component {
+//class Messenger extends Component {
+const Messenger = (props) => {
 
-    state = {
-        messages: [],
-        text: ''
-    }
+    const [messages, setMessages] = useState([])
+    const [text, setText] = useState()
 
-    users = [{ //created because of no info about icon sources for each user
+    useEffect(() => {
+        loadMessages()
+    })
+
+    const users = [{ //created because of no info about icon sources for each user
         id: 1,
         icon: member1,
         color: "#31ade4"
@@ -43,24 +47,36 @@ class Messenger extends Component {
 
     ]
 
-    componentDidMount() {
-        this.loadMessages()
-    }
-
-    async loadMessages() {
-        const messages = await getMessages(this.users)
-        this.setState({ messages })
+    async function loadMessages() {
+        const messages = await getMessages(users)
+        setMessages( messages )
     }
 
     // It makes possible to see a new messages. DDoS because WebSocket is not available :) 
-    timer = setInterval(() => {
-        this.loadMessages()
+    const timer = setInterval(() => {
+        loadMessages()
     }, 2000)
 
-    render() {
-        if (this.state.messages.length === 0) {
-            return <div>No messages</div>
+    const handleInput = event => {
+        setText( event.target.value)
+    }
+
+    const sendMessageEventHandle = () => {
+        const textObj = {
+            "text": text
         }
+        sendMessageHandle(textObj)
+    }
+
+    async function sendMessageHandle(textObj) {
+        await sendMessage(textObj)
+        setText( '' );
+        loadMessages()
+    }
+
+        /*if (messages.length === 0) {
+            return <div>No messages</div>
+        }*/
         return (
             <div className={classes.Messenger}>
                 <div className={classes.Messenger_frame}>
@@ -69,21 +85,21 @@ class Messenger extends Component {
                         {configData.ownerName}'s Groupchat
                     </header>
                     <div className={classes.Messenger_members}>
-                        {this.renderMembers()}
+                        {renderMembers()}
                         <ReactSVG className={classes.Messenger_members_icon} src={plus} />
                     </div>
                     <div className={classes.Messenger_message_list}>
                         <div className={classes.Messenger_message_list_wrapper}>
-                            {this.renderMessages()}
+                            {renderMessages()}
                         </div>
                     </div>
                     <div className={classes.Messenger_action_bar}>
                         <div className={classes.Messenger_action_bar_wrapper}>
                             <div className={classes.Input_wrapper}>
-                                <input className={classes.Messenger_action_bar_input} type="text" title="Message" onChange={this.handleInput} value={this.state.text} />
+                                <input className={classes.Messenger_action_bar_input} type="text" title="Message" onChange={handleInput} value={text} />
                                 <ReactSVG className={classes.Messenger_action_bar_input_icon} src={smiley} />
                             </div>
-                            <button className={classes.Messenger_action_bar_btn} type="button" onClick={this.sendMessageEventHandle}>
+                            <button className={classes.Messenger_action_bar_btn} type="button" onClick={sendMessageEventHandle}>
                                 <ReactSVG className={classes.Messenger_action_bar_btn} src={submit} />
                             </button>
                         </div>
@@ -91,17 +107,16 @@ class Messenger extends Component {
                 </div>
             </div>
         )
-    }
 
-    renderMembers() {
-        return this.users.map((user, i) => (
+    function renderMembers() {
+        return users.map((user, i) => (
             <img key={i} className={classes.Messenger_members_item} style={{ borderColor: user.color }} src={user.icon} alt={"Member" + user.id} />
         ))
     }
 
-    renderMessages() {
+    function renderMessages() {
 
-        return this.state.messages.map((v, i) => (
+        return messages.map((v, i) => (
             <div className={classes.Messenger_message_list_wrapper___distanz} key={i}>
                 <img className={classes.Messenger_members_item} style={{ borderColor: v.user.color }} src={v.user.icon} alt="Member 1" />
                 <div className={classes.Messenger_message_list_item} style={{ backgroundColor: v.user.color }} >
@@ -112,27 +127,6 @@ class Messenger extends Component {
                     {v.text}
                 </div>
             </div>));
-    }
-
-    handleInput = event => {
-        this.setState({
-            text: event.target.value
-        })
-    }
-
-    sendMessageEventHandle = () => {
-        const textObj = {
-            "text": this.state.text
-        }
-        this.sendMessageHandle(textObj)
-    }
-
-    async sendMessageHandle(textObj) {
-        await sendMessage(textObj)
-        this.setState({
-            text: ''
-        });
-        this.loadMessages()
     }
 
 }
