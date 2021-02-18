@@ -1,10 +1,8 @@
-//import React, { Component } from 'react'
+import React, { Component } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
+import { addTextAction, addMessageAction } from '../../store'
 import { useState, useEffect } from 'react'
 import classes from './Messenger.module.css'
-import member1 from '../../images/Users/1.jpg';
-import member2 from '../../images/Users/2.jpg';
-import member3 from '../../images/Users/3.jpg';
-import member4 from '../../images/Users/4.jpg';
 import plus from '../../images/Icons/plus.svg';
 import arrow from '../../images/Icons/arrow.svg';
 import submit from '../../images/Icons/submit.svg';
@@ -14,51 +12,28 @@ import { formatAMPM } from '../../converter';
 import { ReactSVG } from 'react-svg';
 import { getMessages, sendMessage } from '../../service/MessagesService';
 
-//class Messenger extends Component {
 const Messenger = (props) => {
 
-    const [messages, setMessages] = useState([])
-    const [text, setText] = useState()
+    const users = useSelector(state => state.users)
+    const text = useSelector(state => state.text)
+    const messages = useSelector(state => state.messages)
+    const dispatch = useDispatch()
 
     useEffect(() => {
+        async function loadMessages() {
+            const messages = await getMessages(users)
+            dispatch(addMessageAction(messages))
+        }
         loadMessages()
-    })
-
-    const users = [{ //created because of no info about icon sources for each user
-        id: 1,
-        icon: member1,
-        color: "#31ade4"
-    },
-    {
-        id: 2,
-        icon: member2,
-        color: "#DEA43E"
-    },
-    {
-        id: 30, //random id
-        icon: member3,
-        color: "#FC00FF"
-    },
-    {
-        id: 40, //random id
-        icon: member4,
-        color: "#EDF1F5"
-    },
-
-    ]
+    }, [])
 
     async function loadMessages() {
         const messages = await getMessages(users)
-        setMessages( messages )
+        dispatch(addMessageAction(messages))
     }
 
-    // It makes possible to see a new messages. DDoS because WebSocket is not available :) 
-    const timer = setInterval(() => {
-        loadMessages()
-    }, 2000)
-
     const handleInput = event => {
-        setText( event.target.value)
+        dispatch(addTextAction(event.target.value))
     }
 
     const sendMessageEventHandle = () => {
@@ -70,13 +45,13 @@ const Messenger = (props) => {
 
     async function sendMessageHandle(textObj) {
         await sendMessage(textObj)
-        setText( '' );
+        dispatch(addTextAction(''))
         loadMessages()
     }
 
-        /*if (messages.length === 0) {
-            return <div>No messages</div>
-        }*/
+    /*if (messages.length === 0) {
+        return <div>No messages</div>
+    }*/
         return (
             <div className={classes.Messenger}>
                 <div className={classes.Messenger_frame}>
@@ -96,7 +71,7 @@ const Messenger = (props) => {
                     <div className={classes.Messenger_action_bar}>
                         <div className={classes.Messenger_action_bar_wrapper}>
                             <div className={classes.Input_wrapper}>
-                                <input className={classes.Messenger_action_bar_input} type="text" title="Message" onChange={handleInput} value={text} />
+                                <input className={classes.Messenger_action_bar_input} type="text" title="Message" onChange={handleInput} value={text}/>
                                 <ReactSVG className={classes.Messenger_action_bar_input_icon} src={smiley} />
                             </div>
                             <button className={classes.Messenger_action_bar_btn} type="button" onClick={sendMessageEventHandle}>
@@ -119,7 +94,7 @@ const Messenger = (props) => {
         return messages.map((v, i) => (
             <div className={classes.Messenger_message_list_wrapper___distanz} key={i}>
                 <img className={classes.Messenger_members_item} style={{ borderColor: v.user.color }} src={v.user.icon} alt="Member 1" />
-                <div className={classes.Messenger_message_list_item} style={{ backgroundColor: v.user.color }} >
+                    <div className={classes.Messenger_message_list_item} style={{ backgroundColor: v.user.color }} >
                     <div className={classes.Messenger_message_list_wrapper_info}>
                         <div className={classes.Messenger_message_list_item_userName}>{v.user.name}</div>
                         <div className={classes.Messenger_message_list_item_userDate}>{formatAMPM(v.sentAt)}</div>
